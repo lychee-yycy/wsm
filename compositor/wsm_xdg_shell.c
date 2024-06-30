@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "wsm_server.h"
 #include "wsm_log.h"
 #include "wsm_view.h"
+#include "wsm_seat.h"
 #include "wsm_output.h"
 #include "wsm_xdg_popup.h"
 #include "wsm_workspace.h"
@@ -260,7 +261,14 @@ static void handle_request_move(struct wl_listener *listener, void *data) {
 }
 
 static void handle_request_resize(struct wl_listener *listener, void *data) {
-
+    // struct wlr_xdg_toplevel_resize_event *event = data;
+    // struct wsm_xdg_shell_view *xdg_toplevel_view = wl_container_of(listener, xdg_toplevel_view, request_resize);
+    // struct wsm_view *view = &xdg_toplevel_view->view;
+    // struct wlr_xdg_toplevel_resize_event *e = data;
+    // struct wsm_seat *seat = e->seat->seat->data;
+    // if (e->serial == seat->last_button_serial) {
+    //     // seatop_begin_resize_floating(seat, view->container, e->edges);
+    // }
 }
 
 static void handle_set_title(struct wl_listener *listener, void *data) {

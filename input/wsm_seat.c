@@ -307,6 +307,14 @@ void seat_idle_notify_activity(struct wsm_seat *seat,
     wlr_idle_notifier_v1_notify_activity(global_server.idle_notifier_v1, seat->wlr_seat);
 }
 
+void seatop_tablet_tool_tip(struct wsm_seat *seat,
+                            struct wsm_tablet_tool *tool, uint32_t time_msec,
+                            enum wlr_tablet_tool_tip_state state) {
+    if (seat->seatop_impl->tablet_tool_tip) {
+        seat->seatop_impl->tablet_tool_tip(seat, tool, time_msec, state);
+    }
+}
+
 void seatop_hold_begin(struct wsm_seat *seat,
                        struct wlr_pointer_hold_begin_event *event) {
     if (seat->seatop_impl->hold_begin) {
@@ -483,11 +491,8 @@ static void seat_keyboard_notify_enter(struct wsm_seat *seat,
 
 static void seat_configure_pointer(struct wsm_seat *seat,
                                    struct wsm_seat_device *wsm_device) {
-    // seat_configure_xcursor(seat);
     wlr_cursor_attach_input_device(seat->wsm_cursor->wlr_cursor,
                                    wsm_device->input_device->wlr_device);
-    // wl_event_source_timer_update(
-    //     seat->wsm_cursor->hide_source, cursor_get_timeout(seat->wsm_cursor));
 }
 
 static void seat_configure_keyboard(struct wsm_seat *seat,
@@ -624,4 +629,10 @@ void drag_icons_update_position(struct wsm_seat *seat) {
     wl_list_for_each(node, &seat->drag_icons->children, link) {
         drag_icon_update_position(seat, node);
     }
+}
+
+void seat_pointer_notify_button(struct wsm_seat *seat, uint32_t time_msec,
+                                uint32_t button, enum wlr_button_state state) {
+    seat->last_button_serial = wlr_seat_pointer_notify_button(seat->wlr_seat,
+                                                              time_msec, button, state);
 }

@@ -33,9 +33,12 @@ THE SOFTWARE.
 #include <wlr/types/wlr_damage_ring.h>
 #include <wlr/types/wlr_output_layout.h>
 
+struct udev_device;
+
 struct wlr_output;
 struct wlr_output_mode;
 struct wlr_scene_output;
+struct wlr_drm_connector;
 struct wlr_output_power_v1_set_mode_event;
 
 struct wsm_workspace;
@@ -125,5 +128,8 @@ void wsm_output_power_manager_set_mode(struct wlr_output_power_v1_set_mode_event
 void wsm_output_calculate_usable_area(struct wsm_output *output, struct wlr_box *usable_area);
 bool wsm_output_is_usable(struct wsm_output *output);
 bool wsm_output_can_reuse_mode(struct wsm_output *output);
+struct wlr_drm_connector *get_drm_connector_from_wsm_output(struct wsm_output *output);
+const char* get_drm_device_name_from_wsm_output(struct wsm_output *output);
+struct udev_device* get_udev_device_from_wsm_output(struct wsm_output *output);
 
 #endif

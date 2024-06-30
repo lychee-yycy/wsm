@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "wsm_log.h"
 #include "wsm_tablet.h"
 #include "wsm_common.h"
+#include "wsm_scene.h"
 #include "wsm_output_manager.h"
 
 #include <stdlib.h>
@@ -42,6 +43,9 @@ THE SOFTWARE.
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_relative_pointer_v1.h>
+#include <wlr/types/wlr_cursor_shape_v1.h>
+
+#define WLR_CURSOR_SHAPE_V1_VERSION 1
 
 static void cursor_hide(struct wsm_cursor *cursor) {
     wlr_cursor_unset_image(cursor->wlr_cursor);
@@ -53,6 +57,57 @@ static int hide_notify(void *data) {
     struct wsm_cursor *cursor = data;
     cursor_hide(cursor);
     return 1;
+}
+
+static void handle_request_cursor(struct wl_listener *listener, void *data) {
+    struct wsm_cursor *cursor = wl_container_of(listener, cursor, request_cursor);
+    struct wsm_seat *seat = cursor->wsm_seat;
+
+    if (!seatop_allows_set_cursor(seat)) {
+        return;
+    }
+
+    struct wlr_seat_pointer_request_set_cursor_event *event = data;
+    struct wl_client *focused_client = NULL;
+    struct wlr_surface *focused_surface =
+        seat->wlr_seat->pointer_state.focused_surface;
+    if (focused_surface != NULL) {
+        focused_client = wl_resource_get_client(focused_surface->resource);
+    }
+
+    if (focused_client == NULL ||
+        event->seat_client->client != focused_client) {
+        wsm_log(WSM_ERROR, "denying request to set cursor from unfocused client");
+        return;
+    }
+
+    cursor_set_image_surface(cursor, event->surface, event->hotspot_x,
+                             event->hotspot_y, focused_client);
+}
+
+static void handle_request_set_shape(struct wl_listener *listener, void *data) {
+    struct wlr_cursor_shape_manager_v1_request_set_shape_event *event = data;
+    const char *shape_name = wlr_cursor_shape_v1_name(event->shape);
+    struct wsm_cursor *cursor = wl_container_of(listener, cursor, request_set_shape);
+    struct wsm_seat *seat = cursor->wsm_seat;
+
+    if (!seatop_allows_set_cursor(seat)) {
+        return;
+    }
+
+    struct wl_client *focused_client = NULL;
+    struct wlr_surface *focused_surface = seat->wlr_seat->pointer_state.focused_surface;
+    if (focused_surface != NULL) {
+        focused_client = wl_resource_get_client(focused_surface->resource);
+    }
+
+    if (focused_client == NULL || event->seat_client->client != focused_client) {
+        wsm_log(WSM_ERROR, "denying request to set cursor from unfocused client");
+        return;
+    }
+
+    wsm_log(WSM_DEBUG, "set xcursor to shape %s", shape_name);
+    cursor_set_image(cursor, wlr_cursor_shape_v1_name(event->shape), focused_client);
 }
 
 static void handle_image_surface_destroy(struct wl_listener *listener,
@@ -306,19 +361,20 @@ static void handle_tablet_tool_position(struct wsm_cursor *cursor,
         break;
     }
 
-    // double sx, sy;
-    // struct wlr_surface *surface = NULL;
-    // struct wsm_seat *seat = cursor->wsm_seat;
-    // node_at_coords(seat, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
+    double sx, sy;
+    struct wlr_surface *surface = NULL;
+    struct wsm_seat *seat = cursor->wsm_seat;
+    wlr_scene_node_at(
+        &global_server.wsm_scene->wlr_scene->tree.node, cursor->wlr_cursor->x, cursor->wlr_cursor->y, &sx, &sy);
 
-    // if (!cursor->simulating_pointer_from_tool_tip &&
-    //     ((surface && wlr_surface_accepts_tablet_v2(tablet->tablet_v2, surface)) ||
-    //      wlr_tablet_tool_v2_has_implicit_grab(tool->tablet_v2_tool))) {
-    //     seatop_tablet_tool_motion(seat, tool, time_msec);
-    // } else {
-    //     wlr_tablet_v2_tablet_tool_notify_proximity_out(tool->tablet_v2_tool);
-    //     pointer_motion(cursor, time_msec, input_device->wlr_device, dx, dy, dx, dy);
-    // }
+    if (!cursor->simulating_pointer_from_tool_tip &&
+        ((surface && wlr_surface_accepts_tablet_v2(tablet->tablet_v2, surface)) ||
+         wlr_tablet_tool_v2_has_implicit_grab(tool->tablet_v2_tool))) {
+        seatop_tablet_tool_motion(seat, tool, time_msec);
+    } else {
+        wlr_tablet_v2_tablet_tool_notify_proximity_out(tool->tablet_v2_tool);
+        pointer_motion(cursor, time_msec, input_device->wlr_device, dx, dy, dx, dy);
+    }
 }
 
 static void handle_tool_axis(struct wl_listener *listener, void *data) {
@@ -382,38 +438,35 @@ static void handle_tool_tip(struct wl_listener *listener, void *data) {
     struct wlr_tablet_tool_tip_event *event = data;
     cursor_handle_activity_from_device(cursor, &event->tablet->base);
 
-    // struct wsm_tablet_tool *wsm_tool = event->tool->data;
-    // struct wlr_tablet_v2_tablet *tablet_v2 = wsm_tool->tablet->tablet_v2;
-    // struct wsm_seat *seat = cursor->wsm_seat;
+    struct wsm_tablet_tool *wsm_tool = event->tool->data;
+    struct wlr_tablet_v2_tablet *tablet_v2 = wsm_tool->tablet->tablet_v2;
+    struct wsm_seat *seat = cursor->wsm_seat;
 
 
-    // double sx, sy;
-    // struct wlr_surface *surface = NULL;
-    // node_at_coords(seat, cursor->cursor->x, cursor->cursor->y,
-    //                &surface, &sx, &sy);
+    double sx, sy;
+    struct wlr_surface *surface = NULL;
+    wlr_scene_node_at(
+        &global_server.wsm_scene->wlr_scene->tree.node, cursor->wlr_cursor->x, cursor->wlr_cursor->y, &sx, &sy);
 
-    // if (cursor->simulating_pointer_from_tool_tip &&
-    //     event->state == WLR_TABLET_TOOL_TIP_UP) {
-    //     cursor->simulating_pointer_from_tool_tip = false;
-    //     dispatch_cursor_button(cursor, &event->tablet->base, event->time_msec,
-    //                            BTN_LEFT, WLR_BUTTON_RELEASED);
-    //     wlr_seat_pointer_notify_frame(cursor->seat->wlr_seat);
-    // } else if (!surface || !wlr_surface_accepts_tablet_v2(tablet_v2, surface)) {
-    //     // If we started holding the tool tip down on a surface that accepts
-    //     // tablet v2, we should notify that surface if it gets released over a
-    //     // surface that doesn't support v2.
-    //     if (event->state == WLR_TABLET_TOOL_TIP_UP) {
-    //         seatop_tablet_tool_tip(seat, wsm_tool, event->time_msec,
-    //                                WLR_TABLET_TOOL_TIP_UP);
-    //     } else {
-    //         cursor->simulating_pointer_from_tool_tip = true;
-    //         dispatch_cursor_button(cursor, &event->tablet->base,
-    //                                event->time_msec, BTN_LEFT, WLR_BUTTON_PRESSED);
-    //         wlr_seat_pointer_notify_frame(cursor->seat->wlr_seat);
-    //     }
-    // } else {
-    //     seatop_tablet_tool_tip(seat, wsm_tool, event->time_msec, event->state);
-    // }
+    if (cursor->simulating_pointer_from_tool_tip &&
+        event->state == WLR_TABLET_TOOL_TIP_UP) {
+        cursor->simulating_pointer_from_tool_tip = false;
+        dispatch_cursor_button(cursor, &event->tablet->base, event->time_msec,
+                               BTN_LEFT, WLR_BUTTON_RELEASED);
+        wlr_seat_pointer_notify_frame(seat->wlr_seat);
+    } else if (!surface || !wlr_surface_accepts_tablet_v2(tablet_v2, surface)) {
+        if (event->state == WLR_TABLET_TOOL_TIP_UP) {
+            seatop_tablet_tool_tip(seat, wsm_tool, event->time_msec,
+                                   WLR_TABLET_TOOL_TIP_UP);
+        } else {
+            cursor->simulating_pointer_from_tool_tip = true;
+            dispatch_cursor_button(cursor, &event->tablet->base,
+                                   event->time_msec, BTN_LEFT, WLR_BUTTON_PRESSED);
+            wlr_seat_pointer_notify_frame(seat->wlr_seat);
+        }
+    } else {
+        seatop_tablet_tool_tip(seat, wsm_tool, event->time_msec, event->state);
+    }
 }
 
 static struct wsm_tablet *get_tablet_for_device(struct wsm_cursor *cursor,
@@ -491,9 +544,9 @@ static void handle_request_pointer_set_cursor(struct wl_listener *listener,
                                               void *data) {
     struct wsm_cursor *cursor =
         wl_container_of(listener, cursor, request_set_cursor);
-    // if (!seatop_allows_set_cursor(cursor->wsm_seat)) {
-    //     return;
-    // }
+    if (!seatop_allows_set_cursor(cursor->wsm_seat)) {
+        return;
+    }
     struct wlr_seat_pointer_request_set_cursor_event *event = data;
 
     struct wl_client *focused_client = NULL;
@@ -535,6 +588,21 @@ struct wsm_cursor *wsm_cursor_create(const struct wsm_server* server, struct wsm
         wlr_cursor_set_xcursor(cursor->wlr_cursor, global_server.xcursor_manager, "default");
     }
 #endif
+
+    cursor->request_cursor.notify = handle_request_cursor;
+    wl_signal_add(&seat->wlr_seat->events.request_set_cursor,
+                  &cursor->request_cursor);
+
+    struct wlr_cursor_shape_manager_v1 *cursor_shape_manager =
+        wlr_cursor_shape_manager_v1_create(server->wl_display,
+                                           WLR_CURSOR_SHAPE_V1_VERSION);
+    if (!wsm_assert(cursor_shape_manager, "Could not create wlr_cursor_shape_manager_v1: allocation failed!")) {
+        free(cursor);
+        return NULL;
+    }
+    cursor->request_set_shape.notify = handle_request_set_shape;
+    wl_signal_add(&cursor_shape_manager->events.request_set_shape,
+                  &cursor->request_set_shape);
 
     cursor->hide_source = wl_event_loop_add_timer(server->wl_event_loop,
                                                   hide_notify, cursor);
@@ -733,9 +801,6 @@ void cursor_handle_activity_from_device(struct wsm_cursor *cursor,
 
 void cursor_handle_activity_from_idle_source(struct wsm_cursor *cursor,
                                              enum wlr_input_device_type idle_source) {
-    // wl_event_source_timer_update(
-    //     cursor->hide_source, cursor_get_timeout(cursor));
-
     seat_idle_notify_activity(cursor->wsm_seat, idle_source);
     if (idle_source != WLR_INPUT_DEVICE_TOUCH) {
         cursor_unhide(cursor);
@@ -760,7 +825,6 @@ void cursor_unhide(struct wsm_cursor *cursor) {
         cursor_set_image(cursor, image, cursor->image_client);
     }
     cursor_rebase(cursor);
-    // wl_event_source_timer_update(cursor->hide_source, cursor_get_timeout(cursor));
 }
 
 void dispatch_cursor_button(struct wsm_cursor *cursor,

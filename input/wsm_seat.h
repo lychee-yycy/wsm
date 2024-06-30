@@ -180,6 +180,9 @@ void seat_remove_device(struct wsm_seat *seat,
                         struct wsm_input_device *device);
 void seat_idle_notify_activity(struct wsm_seat *seat,
                                enum wlr_input_device_type source);
+void seatop_tablet_tool_tip(struct wsm_seat *seat,
+                            struct wsm_tablet_tool *tool, uint32_t time_msec,
+                            enum wlr_tablet_tool_tip_state state);
 void seatop_hold_begin(struct wsm_seat *seat,
                        struct wlr_pointer_hold_begin_event *event);
 void seatop_hold_end(struct wsm_seat *seat,
@@ -222,5 +225,7 @@ void seat_set_focus_surface(struct wsm_seat *seat,
 void seat_set_focus_layer(struct wsm_seat *seat,
                           struct wlr_layer_surface_v1 *layer);
 void drag_icons_update_position(struct wsm_seat *seat);
+void seat_pointer_notify_button(struct wsm_seat *seat, uint32_t time_msec,
+                                uint32_t button, enum wlr_button_state state);
 
 #endif

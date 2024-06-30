@@ -76,6 +76,9 @@ struct wsm_cursor {
     pixman_region32_t confine; // invalid if active_constraint == NULL
     bool active_confine_requires_warp;
 
+    struct wl_listener request_cursor;
+    struct wl_listener request_set_shape;
+
     struct wlr_pointer_gestures_v1 *pointer_gestures;
     struct wl_listener hold_begin;
     struct wl_listener hold_end;

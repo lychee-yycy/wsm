@@ -42,6 +42,33 @@ enum wsm_titlebar_state {
     WSM_FOCUS_OUT,
 };
 
+enum ssd_part_type {
+    SSD_NONE = 0,
+    SSD_BUTTON_CLOSE,
+    SSD_BUTTON_MAXIMIZE,
+    SSD_BUTTON_MINIMIZE,
+    SSD_BUTTON_ICONIFY,
+    SSD_PART_TITLEBAR,
+    SSD_PART_TITLE,
+    SSD_PART_TOP_LEFT,
+    SSD_PART_TOP_RIGHT,
+    SSD_PART_BOTTOM_RIGHT,
+    SSD_PART_BOTTOM_LEFT,
+    SSD_PART_TOP,
+    SSD_PART_RIGHT,
+    SSD_PART_BOTTOM,
+    SSD_PART_LEFT,
+    SSD_CLIENT,
+    SSD_FRAME,
+    SSD_ROOT,
+    SSD_MENU,
+    SSD_OSD,
+    SSD_LAYER_SURFACE,
+    SSD_LAYER_SUBSURFACE,
+    SSD_UNMANAGED,
+    SSD_END_MARKER
+};
+
 struct wsm_titlebar {
     struct wlr_scene_rect *background;
     struct wsm_image_node *icon;

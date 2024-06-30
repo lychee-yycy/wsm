@@ -38,7 +38,12 @@ THE SOFTWARE.
 static void handle_button(struct wsm_seat *seat, uint32_t time_msec,
                           struct wlr_input_device *device, uint32_t button,
                           enum wlr_button_state state) {
+    // struct wsm_cursor *cursor = seat->wsm_cursor;
 
+    // struct wlr_surface *surface = NULL;
+    // double sx, sy;
+    // struct wlr_scene_node *node = wlr_scene_node_at(
+    //     &global_server.wsm_scene->wlr_scene->tree.node, cursor->wlr_cursor->x, cursor->wlr_cursor->y, &sx, &sy);
 }
 
 static void handle_pointer_motion(struct wsm_seat *seat, uint32_t time_msec) {
