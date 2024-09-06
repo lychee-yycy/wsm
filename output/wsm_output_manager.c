@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include "wsm_server.h"
 #include "wsm_log.h"
+#include "wsm_renderer.h"
 #include "wsm_output.h"
 #include "wsm_scene.h"
 #include "wsm_scene.h"
@@ -73,7 +74,7 @@ static void handle_new_output(struct wl_listener *listener, void *data) {
 	}
 
 	if (!wlr_output_init_render(wlr_output, global_server.wlr_allocator,
-			global_server.wlr_renderer)) {
+			global_server.wsm_renderer->wlr_renderer)) {
 		wsm_log(WSM_ERROR, "Failed to init output render");
 		return;
 	}

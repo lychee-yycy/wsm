@@ -40,6 +40,7 @@ THE SOFTWARE.
 #include "wsm_cursor.h"
 #include "wsm_session_lock.h"
 #include "wsm_desktop.h"
+#include "wsm_renderer.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -261,27 +262,27 @@ bool wsm_server_init(struct wsm_server *server)
 
 	wlr_multi_for_each_backend(server->backend, detect_proprietary, NULL);
 
-	server->wlr_renderer = wlr_renderer_autocreate(server->backend);
-	if (!server->wlr_renderer) {
-		wsm_log(WSM_ERROR, "Failed to create renderer");
+	server->wsm_renderer = wsm_renderer_create();
+	if (!server->wsm_renderer) {
+		wsm_log(WSM_ERROR, "Failed to create wsm_renderer");
 		return false;
 	}
 
-	wlr_renderer_init_wl_shm(server->wlr_renderer, server->wl_display);
+	wlr_renderer_init_wl_shm(server->wsm_renderer->wlr_renderer, server->wl_display);
 
-	if (wlr_renderer_get_texture_formats(server->wlr_renderer, WLR_BUFFER_CAP_DMABUF) != NULL) {
+	if (wlr_renderer_get_texture_formats(server->wsm_renderer->wlr_renderer, WLR_BUFFER_CAP_DMABUF) != NULL) {
 		server->linux_dmabuf_v1 = wlr_linux_dmabuf_v1_create_with_renderer(
-			server->wl_display, 4, server->wlr_renderer);
-		// wlr_drm_create(server->wl_display, server->wlr_renderer);
+			server->wl_display, 4, server->wsm_renderer->wlr_renderer);
+		wlr_drm_create(server->wl_display, server->wsm_renderer->wlr_renderer);
 	}
 
-	server->wlr_allocator = wlr_allocator_autocreate(server->backend, server->wlr_renderer);
+	server->wlr_allocator = wlr_allocator_autocreate(server->backend, server->wsm_renderer->wlr_renderer);
 	if (!server->wlr_allocator) {
 		wsm_log(WSM_ERROR, "Failed to create allocator");
 		return false;
 	}
 
-	server->wlr_compositor = wlr_compositor_create(server->wl_display, 6, server->wlr_renderer);
+	server->wlr_compositor = wlr_compositor_create(server->wl_display, 6, server->wsm_renderer->wlr_renderer);
 	wlr_subcompositor_create(server->wl_display);
 	server->wsm_scene = wsm_scene_create(server);
 
@@ -353,14 +354,12 @@ bool wsm_server_init(struct wsm_server *server)
 
 	if (!server->socket) {
 		wsm_log(WSM_ERROR, "Unable to open wayland socket");
-		wlr_backend_destroy(server->backend);
 		return false;
 	}
 
 	server->headless_backend = wlr_headless_backend_create(server->wl_event_loop);
 	if (!server->headless_backend) {
 		wsm_log(WSM_ERROR, "Failed to create secondary headless backend");
-		wlr_backend_destroy(server->backend);
 		return false;
 	} else {
 		wlr_multi_backend_add(server->backend, server->headless_backend);
@@ -385,11 +384,37 @@ bool wsm_server_init(struct wsm_server *server)
 }
 
 void server_finish(struct wsm_server *server) {
+	if (server->backend) {
+		wlr_backend_destroy(server->backend);
+	}
+
+	if (server->wlr_allocator) {
+		wlr_allocator_destroy(server->wlr_allocator);
+	}
+
+	if (server->wsm_renderer) {
+		if (server->wsm_renderer->wlr_renderer) {
+			wlr_renderer_destroy(server->wsm_renderer->wlr_renderer);
+		}
+		free(server->wsm_renderer);
+	}
+
+	if (server->wl_event_loop) {
+		wl_event_loop_destroy(server->wl_event_loop);
+	}
+
+	if (server->wl_display) {
+		wl_display_destroy_clients(server->wl_display);
+		wl_display_destroy(server->wl_display);
+	}
+
+	if (server->desktop_interface) {
+		wsm_desktop_interface_destory(server->desktop_interface);
+	}
 #if HAVE_XWAYLAND
-	wlr_xwayland_destroy(server->xwayland.wlr_xwayland);
+	if (server->xwayland.wlr_xwayland) {
+		wlr_xwayland_destroy(server->xwayland.wlr_xwayland);
+	}
 #endif
-	wl_display_destroy_clients(server->wl_display);
-	wlr_backend_destroy(server->backend);
-	wl_display_destroy(server->wl_display);
 	list_free(server->dirty_nodes);
 }

@@ -44,7 +44,6 @@ struct wl_display;
 struct wsm_output;
 struct wlr_backend;
 struct wlr_surface;
-struct wlr_renderer;
 struct wlr_allocator;
 struct wlr_compositor;
 struct wlr_presentation;
@@ -73,6 +72,7 @@ struct wlr_text_input_manager_v3;
 
 struct wsm_font;
 struct wsm_list;
+struct wsm_renderer;
 struct wsm_xdg_shell;
 struct wsm_layer_shell;
 struct wsm_scene;
@@ -122,7 +122,7 @@ struct wsm_server {
 	struct wlr_backend *backend;
 	struct wlr_session *wlr_session;
 	struct wlr_backend *headless_backend;
-	struct wlr_renderer *wlr_renderer;
+	struct wsm_renderer *wsm_renderer;
 	struct wlr_allocator *wlr_allocator;
 	struct wlr_compositor *wlr_compositor;
 	struct wlr_relative_pointer_manager_v1 *wlr_relative_pointer_manager;

@@ -123,7 +123,10 @@ int main(int argc, char **argv) {
 	signal(SIGINT, sig_handler);
 
 	signal(SIGPIPE, SIG_IGN);
-	wsm_server_init(&global_server);
+	if (!wsm_server_init(&global_server)) {
+		wsm_log(WSM_ERROR, "wsm_server_init failed!");
+		goto shutdown;
+	}
 	
 	const char *socket = wl_display_add_socket_auto(global_server.wl_display);
 	if (!socket) {
@@ -145,7 +148,6 @@ int main(int argc, char **argv) {
 #endif
 
 	if (!wlr_backend_start(global_server.backend)) {
-		wl_display_destroy(global_server.wl_display);
 		wsm_log(WSM_ERROR, "backend start failed!");
 		goto shutdown;
 	}
