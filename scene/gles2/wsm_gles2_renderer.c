@@ -22,29 +22,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef WSM_PASS_H
-#define WSM_PASS_H
+#include "wsm_gles2_renderer.h"
+#include "wsm_renderer.h"
+#include "wsm_server.h"
 
-#include <wlr/util/box.h>
-#include <wlr/render/pass.h>
+#include <wlr/render/gles2.h>
+#include <wlr/render/wlr_renderer.h>
 
-struct wsm_render_pass;
+// static struct wsm_render_pass *gles2_begin_buffer_pass(struct wlr_renderer *renderer,
+// 		struct wlr_buffer *buffer, const struct wlr_buffer_pass_options *options) {
+// 	// struct wlr_gles2_render_pass *pass = calloc(1, sizeof(*pass));
+// 	// if (pass == NULL) {
+// 	// 	return NULL;
+// 	// }
+	
+// };
 
-struct wsm_render_rect_options {
-	struct wlr_box box;
-	struct wlr_render_color color;
-	const pixman_region32_t *clip;
-	enum wlr_render_blend_mode blend_mode;
-};
+// static const struct wsm_renderer_impl renderer_impl = {
+// 	.begin_buffer_pass = gles2_begin_buffer_pass,
+// };
 
-struct wsm_render_pass_impl {
-	void (*add_rectangle)(struct wsm_render_pass *pass,
-		const struct wsm_render_rect_options *options);
-};
-
-struct wsm_render_pass {
-	struct wlr_render_pass *wlr_render_pass;
-	const struct wsm_render_pass_impl *impl;
-};
-
-#endif
+void wsm_gles2_renderer_init() {
+	// struct wsm_renderer *renderer = global_server.wsm_renderer;
+	// renderer->impl = &renderer_impl;
+}

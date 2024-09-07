@@ -30,6 +30,8 @@ THE SOFTWARE.
 
 #include <stdbool.h>
 
+#include <wlr/types/wlr_scene.h>
+
 struct wlr_scene;
 struct wlr_scene_tree;
 struct wlr_scene_output;
@@ -109,6 +111,33 @@ struct wsm_scene {
 	double width, height;
 };
 
+enum wsm_scene_node_type {
+	WLR_SCENE_NODE_TREE_FALLBACK,
+	WLR_SCENE_NODE_RECT_FALLBACK,
+	WLR_SCENE_NODE_BUFFER_FALLBACK,
+	WSM_SCENE_NODE_RECT,
+};
+
+struct wsm_border {
+	float color[4];
+	int width;
+};
+
+struct wsm_radius_extra {
+	int top_left_radius;
+	int top_right_radius;
+	int bottom_left_radius;
+	int bottom_right_radius;
+};
+
+struct wsm_scene_rect {
+	struct wlr_scene_node node;
+	float color[4];
+	struct wsm_border border;
+	struct wsm_radius_extra radius_extra;
+	int width, height, radius;
+};
+
 struct wsm_scene *wsm_scene_create(const struct wsm_server* server);
 bool wsm_scene_output_commit(struct wlr_scene_output *scene_output,
 	const struct wlr_scene_output_state_options *options);
@@ -116,5 +145,24 @@ bool wsm_scene_output_build_state(struct wlr_scene_output *scene_output,
 	struct wlr_output_state *state, const struct wlr_scene_output_state_options *options);
 void root_get_box(struct wsm_scene *root, struct wlr_box *box);
 void root_scratchpad_show(struct wsm_container *con);
+
+void scene_node_init(struct wlr_scene_node *node,
+	enum wlr_scene_node_type type, struct wlr_scene_tree *parent);
+void scene_node_update(struct wlr_scene_node *node,
+	pixman_region32_t *damage);
+struct wlr_scene *scene_node_get_root(struct wlr_scene_node *node);
+
+struct wsm_scene_rect *wsm_scene_rect_create(struct wlr_scene_tree *parent,
+	int width, int height, int radius, const float color[static 4],
+	const struct wsm_border border, const struct wsm_radius_extra radius_extra);
+void wsm_scene_rect_set_size(struct wsm_scene_rect *rect, int width, int height);
+void wsm_scene_rect_set_color(struct wsm_scene_rect *rect, const float color[static 4]);
+void wsm_scene_rect_set_border_width(struct wsm_scene_rect *rect, int width);
+void wsm_scene_rect_set_border_color(struct wsm_scene_rect *rect, const float color[static 4]);
+void wsm_scene_rect_set_radius(struct wsm_scene_rect *rect, int radius);
+void wsm_scene_rect_set_top_left_radius(struct wsm_scene_rect *rect, int radius);
+void wsm_scene_rect_set_top_right_radius(struct wsm_scene_rect *rect, int radius);
+void wsm_scene_rect_set_bottom_left_radius(struct wsm_scene_rect *rect, int radius);
+void wsm_scene_rect_set_bottom_right_radius(struct wsm_scene_rect *rect, int radius);
 
 #endif

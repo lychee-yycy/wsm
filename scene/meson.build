@@ -14,6 +14,9 @@ wsm_scene = static_library(
 		'effects/blur/wsm_gl_blur.c',
 		'effects/scissors/wsm_gl_scissors_base.c',
 		'effects/scissors/wsm_gl_scissors.c',
+		'vulkan/renderer.c',
+		'gles2/wsm_gles2_renderer.c',
+		'pixman/renderer.c',
 	),
 	dependencies: [
 		wlroots,

@@ -25,10 +25,12 @@ THE SOFTWARE.
 #include "wsm_log.h"
 #include "wsm_server.h"
 #include "wsm_renderer.h"
+#include "gles2/wsm_gles2_renderer.h"
 
 #include <stdlib.h>
 
 #include <wlr/render/wlr_renderer.h>
+#include <wlr/render/gles2.h>
 
 struct wsm_renderer* wsm_renderer_create() {
 	struct wsm_renderer *renderer = calloc(1, sizeof(struct wsm_renderer));
@@ -40,6 +42,10 @@ struct wsm_renderer* wsm_renderer_create() {
 		wsm_log(WSM_ERROR, "Failed to create wlr_renderer");
 		free(renderer);
 		return NULL;
+	}
+
+	if (wlr_renderer_is_gles2(renderer->wlr_renderer)) {
+		wsm_gles2_renderer_init();
 	}
 
 	return renderer;

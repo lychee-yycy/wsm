@@ -57,7 +57,7 @@ static void usage(int error_code) {
 #if HAVE_XWAYLAND
 		"  --xwayland\t\tLoad the xwayland module\n"
 #endif
-		"   -l, --log-level\tSet log output level, default value is 1 only ERROR logs, 3 output all logs, 0 disabled log\n"
+		"  -l, --log-level\tSet log output level, default value is 1 only ERROR logs, 3 output all logs, 0 disabled log\n"
 		"  -h, --help\t\tThis help message\n\n");
 	exit(error_code);
 }
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 		wsm_log(WSM_ERROR, "wsm_server_init failed!");
 		goto shutdown;
 	}
-	
+
 	const char *socket = wl_display_add_socket_auto(global_server.wl_display);
 	if (!socket) {
 		wl_display_destroy(global_server.wl_display);

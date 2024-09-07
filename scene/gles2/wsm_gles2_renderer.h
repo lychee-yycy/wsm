@@ -22,29 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef WSM_PASS_H
-#define WSM_PASS_H
+#ifndef WSM_GLES2_RENDERER_H
+#define WSM_GLES2_RENDERER_H
 
-#include <wlr/util/box.h>
-#include <wlr/render/pass.h>
-
-struct wsm_render_pass;
-
-struct wsm_render_rect_options {
-	struct wlr_box box;
-	struct wlr_render_color color;
-	const pixman_region32_t *clip;
-	enum wlr_render_blend_mode blend_mode;
-};
-
-struct wsm_render_pass_impl {
-	void (*add_rectangle)(struct wsm_render_pass *pass,
-		const struct wsm_render_rect_options *options);
-};
-
-struct wsm_render_pass {
-	struct wlr_render_pass *wlr_render_pass;
-	const struct wsm_render_pass_impl *impl;
-};
+void wsm_gles2_renderer_init();
 
 #endif

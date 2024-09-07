@@ -42,5 +42,7 @@ struct wsm_renderer {
 };
 
 struct wsm_renderer* wsm_renderer_create();
+// void wsm_vulkan_renderer_init();
+// void wsm_pixman_renderer_init();
 
 #endif
