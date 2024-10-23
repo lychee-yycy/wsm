@@ -720,7 +720,7 @@ bool apply_output_configs(struct matched_output_config *configs,
 		};
 		struct wlr_scene_output *scene_output = cfg->output->scene_output;
 		struct wlr_output_state *state = &backend_state->base;
-		if (!wlr_scene_output_build_state(scene_output, state, &opts)) {
+		if (!wsm_scene_output_build_state(scene_output, state, &opts)) {
 			wsm_log(WSM_ERROR, "Building output state for '%s' failed",
 				backend_state->output->name);
 			goto out;

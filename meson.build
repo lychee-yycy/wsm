@@ -43,7 +43,7 @@ wlroots_version = ['>=0.18.0', '<0.20.0']
 # 	required: false,
 # 	version: wlroots_version,
 # )
-wlroots = dependency('wlroots-0.18', version: wlroots_version, fallback: 'wlroots')
+wlroots = dependency('wlroots-0.19', version: wlroots_version, fallback: 'wlroots')
 wlroots_features = {
 	'xwayland': get_option('xwayland').enabled(),
 	'libinput_backend': true,

@@ -356,7 +356,7 @@ static void handle_tablet_tool_position(struct wsm_cursor *cursor,
 		&global_server.wsm_scene->root_scene->tree.node, cursor->wlr_cursor->x, cursor->wlr_cursor->y, &sx, &sy);
 
 	if (!cursor->simulating_pointer_from_tool_tip &&
-		((surface && wlr_surface_accepts_tablet_v2(tablet->tablet_v2, surface)) ||
+		((surface && wlr_surface_accepts_tablet_v2(surface, tablet->tablet_v2)) ||
 		 wlr_tablet_tool_v2_has_implicit_grab(tool->tablet_v2_tool))) {
 		seatop_tablet_tool_motion(seat, tool, time_msec);
 	} else {
@@ -442,7 +442,7 @@ static void handle_tool_tip(struct wl_listener *listener, void *data) {
 		dispatch_cursor_button(cursor, &event->tablet->base, event->time_msec,
 			BTN_LEFT, WL_POINTER_BUTTON_STATE_RELEASED);
 		wlr_seat_pointer_notify_frame(seat->wlr_seat);
-	} else if (!surface || !wlr_surface_accepts_tablet_v2(tablet_v2, surface)) {
+	} else if (!surface || !wlr_surface_accepts_tablet_v2(surface, tablet_v2)) {
 		if (event->state == WLR_TABLET_TOOL_TIP_UP) {
 			seatop_tablet_tool_tip(seat, wsm_tool, event->time_msec,
 				WLR_TABLET_TOOL_TIP_UP);

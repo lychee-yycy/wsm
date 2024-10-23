@@ -130,8 +130,6 @@ bool wsm_scene_output_commit(struct wlr_scene_output *scene_output,
 		goto out;
 	}
 
-	wlr_damage_ring_rotate(&scene_output->damage_ring);
-
 out:
 	wlr_output_state_finish(&state);
 	return ok;
@@ -653,6 +651,34 @@ static void scene_entry_render(struct render_list_entry *entry, const struct ren
 	pixman_region32_fini(&render_region);
 }
 
+static void scene_output_damage(struct wlr_scene_output *scene_output,
+		const pixman_region32_t *damage) {
+	struct wlr_output *output = scene_output->output;
+
+	pixman_region32_t clipped;
+	pixman_region32_init(&clipped);
+	pixman_region32_intersect_rect(&clipped, damage, 0, 0, output->width, output->height);
+
+	if (pixman_region32_not_empty(&clipped)) {
+		wlr_output_schedule_frame(scene_output->output);
+		wlr_damage_ring_add(&scene_output->damage_ring, &clipped);
+
+		pixman_region32_union(&scene_output->pending_commit_damage,
+			&scene_output->pending_commit_damage, &clipped);
+	}
+
+	pixman_region32_fini(&clipped);
+}
+
+static void scene_output_damage_whole(struct wlr_scene_output *scene_output) {
+	struct wlr_output *output = scene_output->output;
+
+	pixman_region32_t damage;
+	pixman_region32_init_rect(&damage, 0, 0, output->width, output->height);
+	scene_output_damage(scene_output, &damage);
+	pixman_region32_fini(&damage);
+}
+
 bool wsm_scene_output_build_state(struct wlr_scene_output *scene_output,
 		struct wlr_output_state *state, const struct wlr_scene_output_state_options *options) {
 	struct wlr_scene_output_state_options default_options = {0};
@@ -688,7 +714,7 @@ bool wsm_scene_output_build_state(struct wlr_scene_output *scene_output,
 
 	if (state->committed & WLR_OUTPUT_STATE_TRANSFORM) {
 		if (render_data.transform != state->transform) {
-			wlr_damage_ring_add_whole(&scene_output->damage_ring);
+			scene_output_damage_whole(scene_output);
 		}
 
 		render_data.transform = state->transform;
@@ -696,7 +722,7 @@ bool wsm_scene_output_build_state(struct wlr_scene_output *scene_output,
 
 	if (state->committed & WLR_OUTPUT_STATE_SCALE) {
 		if (render_data.scale != state->scale) {
-			wlr_damage_ring_add_whole(&scene_output->damage_ring);
+			scene_output_damage_whole(scene_output);
 		}
 
 		render_data.scale = state->scale;
@@ -726,11 +752,8 @@ bool wsm_scene_output_build_state(struct wlr_scene_output *scene_output,
 	struct render_list_entry *list_data = list_con.render_list->data;
 	int list_len = list_con.render_list->size / sizeof(*list_data);
 
-	wlr_damage_ring_set_bounds(&scene_output->damage_ring,
-		render_data.trans_width, render_data.trans_height);
-
 	if (debug_damage == WLR_SCENE_DEBUG_DAMAGE_RERENDER) {
-		wlr_damage_ring_add_whole(&scene_output->damage_ring);
+		scene_output_damage_whole(scene_output);
 	}
 
 	struct timespec now;
@@ -796,7 +819,7 @@ bool wsm_scene_output_build_state(struct wlr_scene_output *scene_output,
 		swapchain = output->swapchain;
 	}
 
-	struct wlr_buffer *buffer = wlr_swapchain_acquire(swapchain, NULL);
+	struct wlr_buffer *buffer = wlr_swapchain_acquire(swapchain);
 	if (buffer == NULL) {
 		return false;
 	}

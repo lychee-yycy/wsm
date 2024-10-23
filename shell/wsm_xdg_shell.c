@@ -235,8 +235,7 @@ static void handle_commit(struct wl_listener *listener, void *data) {
 		return;
 	}
 
-	struct wlr_box new_geo;
-	wlr_xdg_surface_get_geometry(xdg_surface, &new_geo);
+	struct wlr_box new_geo = xdg_surface->geometry;
 	bool new_size = new_geo.width != view->geometry.width ||
 		new_geo.height != view->geometry.height ||
 		new_geo.x != view->geometry.x ||
